@@ -1,0 +1,287 @@
+import { useCallback, useEffect, useState } from "react"
+import { api, fileUrl, postUrl, creatorUrl, thumbUrl, isVideoFile } from "../api"
+import type { PawComment, PawPost, PawRevision, HashLookupResult, PawFile } from "../types"
+import {
+  Spinner,
+  ErrorBox,
+  Empty,
+  fmtDate,
+  sanitizeContent,
+  Thumb,
+  PostCard,
+} from "../components"
+import { navigate } from "../router"
+import { FollowButton } from "../components/FollowButton"
+
+export function PostPage({
+  service,
+  creatorId,
+  postId,
+}: {
+  service: string
+  creatorId: string
+  postId: string
+}) {
+  const [post, setPost] = useState<PawPost | null>(null)
+  const [comments, setComments] = useState<PawComment[] | null>(null)
+  const [revisions, setRevisions] = useState<PawRevision[] | null>(null)
+  const [hashResult, setHashResult] = useState<HashLookupResult | null>(null)
+  const [showHash, setShowHash] = useState(false)
+  const [flagged, setFlagged] = useState<"none" | "busy" | "ok" | "dup" | "err">("none")
+  const [lightbox, setLightbox] = useState<PawFile | null>(null)
+  const [error, setError] = useState<unknown>(null)
+
+  const load = useCallback(async () => {
+    setPost(null)
+    setError(null)
+    setComments(null)
+    setRevisions(null)
+    setHashResult(null)
+    setShowHash(false)
+    try {
+      const p = await api.post(service, creatorId, postId)
+      setPost(p)
+      api.postComments(service, creatorId, postId).then(setComments).catch(() => setComments([]))
+      api
+        .postRevisions(service, creatorId, postId)
+        .then((r) => setRevisions(r.length ? r : []))
+        .catch(() => setRevisions([]))
+    } catch (e) {
+      setError(e)
+    }
+  }, [service, creatorId, postId])
+
+  useEffect(() => {
+    load()
+    setFlagged("none")
+    window.scrollTo(0, 0)
+  }, [load])
+
+  if (error) {
+    return (
+      <div className="page">
+        <ErrorBox error={error} onRetry={load} />
+      </div>
+    )
+  }
+  if (!post) {
+    return (
+      <div className="page">
+        <Spinner />
+      </div>
+    )
+  }
+
+  const hashFromPath = (path: string) => {
+    const name = path.split("/").pop() || ""
+    return name.replace(/\.[^.]+$/, "")
+  }
+  const mainHash = post.file?.path ? hashFromPath(post.file.path) : ""
+
+  const onFlag = async () => {
+    setFlagged("busy")
+    try {
+      await api.flagPost(service, creatorId, postId)
+      setFlagged("ok")
+    } catch (e) {
+      setFlagged(e instanceof Error && /409|already/i.test(e.message) ? "dup" : "err")
+    }
+  }
+
+  const navPost = (targetId: string | null | undefined) => {
+    if (targetId) navigate(`/post/${service}/${creatorId}/${targetId}`)
+  }
+
+  const allFiles: PawFile[] = [
+    ...(post.file?.path ? [post.file] : []),
+    ...(post.attachments || []),
+  ]
+
+  const isVideo = isVideoFile
+
+  return (
+    <div className="page post-page">
+      <div className="post-title-wrap">
+        <h1 className="post-title">{post.title || "(無題)"}</h1>
+        <div className="post-meta">
+          <span className="link" onClick={() => navigate(`/creator/${post.service}/${post.user}`)}>
+            {post.service} / {post.user}
+          </span>
+          {" · "}
+          公開 {fmtDate(post.published)}
+          {post.edited && post.edited !== post.published && ` · 編集 ${fmtDate(post.edited)}`}
+        </div>
+        <div className="creator-actions">
+          <FollowButton service={post.service} id={post.user} />
+          <a
+            className="btn btn-ghost"
+            href={postUrl(post.service, post.user, post.id)}
+            target="_blank"
+            rel="noreferrer"
+            referrerPolicy="no-referrer"
+          >
+            サイトで開く ↗
+          </a>
+        </div>
+      </div>
+
+      {allFiles.length > 0 && (
+        <div className="post-files">
+          {allFiles.map((f, i) => (
+            <figure key={i} className="post-file">
+              {isVideo(f) ? (
+                <video
+                  src={fileUrl(f)}
+                  controls
+                  preload="metadata"
+                  playsInline
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <img
+                  loading="lazy"
+                  src={f === post.file ? thumbUrl(f) : fileUrl(f)}
+                  alt={f.name}
+                  onClick={() => setLightbox(f)}
+                  onError={(e) => {
+                    const el = e.currentTarget
+                    const full = fileUrl(f)
+                    if (el.getAttribute("src") !== full) el.setAttribute("src", full)
+                    else el.style.display = "none"
+                  }}
+                />
+              )}
+              <figcaption>
+                <a href={fileUrl(f)} target="_blank" rel="noreferrer" download>
+                  {f.name}
+                </a>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      )}
+
+      {post.content && (
+        <div className="post-content" dangerouslySetInnerHTML={{ __html: sanitizeContent(post.content, post.service) }} />
+      )}
+
+      {Object.keys(post.embed || {}).length > 0 && (
+        <pre className="post-embed">{JSON.stringify(post.embed, null, 2)}</pre>
+      )}
+
+      <div className="post-nav">
+        <button className="btn" disabled={!post.prev} onClick={() => navPost(post.prev)}>
+          ← 前の投稿
+        </button>
+        <button className="btn" disabled={!post.next} onClick={() => navPost(post.next)}>
+          次の投稿 →
+        </button>
+      </div>
+
+      {mainHash && (
+        <div className="section">
+          <div className="section-row">
+            <span className="mono small">{mainHash}</span>
+            <button
+              className="btn"
+              onClick={async () => {
+                setShowHash(true)
+                if (!hashResult) {
+                  try {
+                    setHashResult(await api.searchHash(mainHash))
+                  } catch {
+                    setHashResult(null)
+                  }
+                }
+              }}
+            >
+              同一ファイル検索
+            </button>
+          </div>
+          {showHash && (
+            <div className="hash-results">
+              {!hashResult && <Spinner label="検索中…" />}
+              {hashResult && (hashResult.posts?.length || 0) === 0 && (
+                <Empty text="同一ファイルは他に見つかりません" />
+              )}
+              {hashResult?.posts?.map((p) => (
+                <PostCard key={`${p.service}:${p.id}`} post={p as unknown as PawPost} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="section">
+        <div className="section-row">
+          <h3>その他</h3>
+          <button className="btn btn-ghost" onClick={onFlag} disabled={flagged === "busy" || flagged === "ok" || flagged === "dup"}>
+            {flagged === "ok" ? "申請済み" : flagged === "dup" ? "既に申請済み" : flagged === "err" ? "失敗" : "再取得を申請 (flag)"}
+          </button>
+        </div>
+      </div>
+
+      <div className="section">
+        <h3>コメント</h3>
+        {comments === null && <Spinner label="コメント…" />}
+        {comments && comments.length === 0 && <Empty text="コメントはありません" />}
+        {comments && comments.length > 0 && (
+          <ul className="comment-list">
+            {comments.map((c) => (
+              <li key={c.id} className="comment">
+                <div className="comment-head">
+                  <b>{c.commenter_name || c.commenter}</b> · {fmtDate(c.published)}
+                </div>
+                <div className="comment-body">{sanitizeContent(c.content, post.service)}</div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {revisions && revisions.length > 0 && (
+        <div className="section">
+          <h3>改訂履歴 ({revisions.length})</h3>
+          <ul className="revision-list">
+            {revisions.map((r) => (
+              <li key={r.revision_id} className="revision">
+                <div className="comment-head">
+                  rev {r.revision_id} · 追加 {fmtDate(r.added)} · ファイル {r.file?.name || "-"}
+                </div>
+                <div className="revision-files">
+                  {[...(r.file?.path ? [r.file] : []), ...(r.attachments || [])].map((f, i) => (
+                    <Thumb key={i} file={f} className="revision-thumb" />
+                  ))}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {lightbox && (
+        <div className="lightbox" onClick={() => setLightbox(null)}>
+          {isVideo(lightbox) ? (
+            <video
+              src={fileUrl(lightbox)}
+              controls
+              autoPlay
+              playsInline
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <img src={fileUrl(lightbox)} alt={lightbox.name} onClick={(e) => e.stopPropagation()} />
+          )}
+          <div className="lightbox-caption">
+            <a href={fileUrl(lightbox)} target="_blank" rel="noreferrer" download>
+              {lightbox.name} をダウンロード
+            </a>
+            <button className="btn" onClick={() => setLightbox(null)}>
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

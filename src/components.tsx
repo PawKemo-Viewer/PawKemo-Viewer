@@ -1,0 +1,205 @@
+import React, { useEffect, useRef, useState, useCallback } from "react"
+import type { PawFile, PawPost } from "./types"
+import { fileUrl, thumbUrl, proxyFileUrl, proxyLinkUrl } from "./api"
+import { navigate } from "./router"
+
+// ---------------------------------------------------------------------------
+// 汎用
+// ---------------------------------------------------------------------------
+
+export function Spinner({ label = "読み込み中…" }: { label?: string }) {
+  return (
+    <div className="spinner-wrap">
+      <div className="spinner" />
+      <span>{label}</span>
+    </div>
+  )
+}
+
+export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+  const msg = error instanceof Error ? error.message : String(error)
+  return (
+    <div className="error-box">
+      <p>エラー: {msg}</p>
+      {onRetry && (
+        <button className="btn" onClick={onRetry}>
+          再試行
+        </button>
+      )}
+    </div>
+  )
+}
+
+export function Empty({ text = "何もありません" }: { text?: string }) {
+  return <div className="empty">{text}</div>
+}
+
+/** 無限スクロール用ローダー: scroll イベント + 幾何判定で確実に発火する
+ *  (IntersectionObserver は環境によって再発火しないため不採用) */
+export function PostGrid({ posts, onEndReached, loading, done, newIds }: PostGridProps) {
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const cbRef = useRef(onEndReached)
+  cbRef.current = onEndReached
+
+  const check = useCallback(() => {
+    const el = sentinelRef.current
+    if (!el || !cbRef.current) return
+    const rect = el.getBoundingClientRect()
+    // 末尾がビューポート + 800px 以内なら次ページを読み込む
+    if (rect.top < window.innerHeight + 800) cbRef.current()
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const handler = () => check()
+    window.addEventListener("scroll", handler, { passive: true })
+    window.addEventListener("resize", handler)
+    return () => {
+      window.removeEventListener("scroll", handler)
+      window.removeEventListener("resize", handler)
+    }
+  }, [check])
+
+  // 環境によっては scroll イベントが発火しない (非表示ウィンドウ等) ため、
+  // 低頻度のポーリングでも末尾到達を判定する (getBoundingClientRect 1回のみで軽量)
+  useEffect(() => {
+    if (!onEndReached) return
+    const iv = setInterval(check, 700)
+    return () => clearInterval(iv)
+  }, [check, onEndReached])
+
+  // ロード完了後にもう一度判定 (セントリーポジションが残っていれば連続ロード)
+  useEffect(() => {
+    if (loading || !onEndReached) return
+    const t = setTimeout(check, 60)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, posts.length])
+
+  return (
+    <div className="post-grid-wrap">
+      <div className="post-grid">
+        {posts.map((p) => (
+          <PostCard key={`${p.service}:${p.id}`} post={p} isNew={newIds?.has(p.id)} />
+        ))}
+      </div>
+      <div ref={sentinelRef} style={{ height: 1 }} />
+      {loading && <Spinner />}
+      {done && posts.length > 0 && <div className="grid-end">終わり</div>}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// サムネイル
+// ---------------------------------------------------------------------------
+
+export function Thumb({ file, className }: { file: PawFile | undefined; className?: string }) {
+  const [stage, setStage] = useState<0 | 1 | 2>(0) // 0=thumb, 1=full, 2=giveup
+  useEffect(() => setStage(0), [file?.path])
+  if (!file?.path || stage === 2)
+    return <div className={`thumb thumb-fallback ${className || ""}`}>🖼️</div>
+  return (
+    <img
+      className={`thumb ${className || ""}`}
+      loading="lazy"
+      decoding="async"
+      src={stage === 0 ? thumbUrl(file) : fileUrl(file)}
+      alt={file.name || ""}
+      onError={() => setStage((s) => (s === 0 ? 1 : 2))}
+    />
+  )
+}
+
+// ---------------------------------------------------------------------------
+// 投稿グリッド
+// ---------------------------------------------------------------------------
+
+export function PostCard({ post, isNew }: { post: PawPost; isNew?: boolean }) {
+  const onClick = useCallback(() => {
+    navigate(`/post/${post.service}/${post.user}/${post.id}`)
+  }, [post])
+  return (
+    <div className="post-card" onClick={onClick}>
+      <div className="post-card-thumb">
+        <Thumb file={post.file?.path ? post.file : post.attachments?.[0]} />
+        {isNew && <span className="badge-new">NEW</span>}
+      </div>
+      <div className="post-card-info">
+        <div className="post-card-title">{post.title || "(無題)"}</div>
+        <div className="post-card-meta">
+          {post.service} · {fmtDate(post.published || post.added)}
+          {post.attachments?.length > 0 && ` · 📎${post.attachments.length}`}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export interface PostGridProps {
+  posts: PawPost[]
+  /** 続きを読み込む (末尾に到達したら呼ばれる) */
+  onEndReached?: () => void
+  loading?: boolean
+  done?: boolean
+  newIds?: Set<string>
+}
+
+// ---------------------------------------------------------------------------
+// その他
+// ---------------------------------------------------------------------------
+
+export function fmtDate(iso: string | undefined): string {
+  if (!iso) return ""
+  try {
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return iso.slice(0, 10)
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, "0")
+    const day = String(d.getDate()).padStart(2, "0")
+    return `${y}-${m}-${day}`
+  } catch {
+    return iso
+  }
+}
+
+/** 投稿本文 HTML を最小限サニタイズして返す。
+ *  リファラーチェックでブロックされるホストの画像はプロキシ経由に、
+ *  外部リンクはリファラー偽装プロキシ経由に書き換える。 */
+export function sanitizeContent(html: string, service?: string): string {
+  if (!html) return ""
+  const doc = new DOMParser().parseFromString(html, "text/html")
+  for (const el of Array.from(doc.querySelectorAll("script,style,iframe,object,embed,link,meta"))) {
+    el.remove()
+  }
+  for (const el of Array.from(doc.querySelectorAll("*"))) {
+    for (const attr of Array.from(el.attributes)) {
+      const name = attr.name.toLowerCase()
+      if (name.startsWith("on") || (name === "href" && attr.value.trim().toLowerCase().startsWith("javascript"))) {
+        el.removeAttribute(attr.name)
+      }
+    }
+  }
+  // 本文中の画像: fanbox / patreon のホットリンク対策を回避
+  for (const img of Array.from(doc.querySelectorAll("img[src]"))) {
+    const src = img.getAttribute("src") || ""
+    const proxied = proxyFileUrl(src)
+    if (proxied && proxied !== src) {
+      img.setAttribute("src", proxied)
+      img.setAttribute("loading", "lazy")
+      img.setAttribute("decoding", "async")
+    }
+  }
+  // 外部リンク: リファラー偽装プロキシ経由に (新規タブで開く)
+  for (const a of Array.from(doc.querySelectorAll("a[href]"))) {
+    const href = a.getAttribute("href") || ""
+    if (/^(#|mailto:|javascript:|tel:)/i.test(href)) continue
+    const proxied = proxyLinkUrl(href, service)
+    if (proxied && proxied !== href) {
+      a.setAttribute("href", proxied)
+      a.setAttribute("target", "_blank")
+      a.setAttribute("rel", "noopener")
+    }
+  }
+  return doc.body.innerHTML
+}
