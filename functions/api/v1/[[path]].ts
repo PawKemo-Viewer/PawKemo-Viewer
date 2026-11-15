@@ -1,6 +1,6 @@
 // Cloudflare Pages Functions: /api/v1/* を pawchive.pw/api/v1/* にプロキシする。
-// 同一オリジンで配信するため CORS は不要。セッションキーは
-// x-pawchive-session ヘッダで受け取り、pawchive へは cookie (session=) に変換する。
+// 同一オリジンで配信するため CORS は不要。
+// セッションキーは x-pawchive-session ヘッダで受け取り、pawchive へは cookie(session=) に変換する。
 
 const UPSTREAM = "https://pawchive.pw/api/v1"
 
@@ -9,67 +9,138 @@ interface Env {
   PAWCHIVE_SESSION?: string
 }
 
-export const onRequest: PagesFunction<Env> = async ({ request, params, env }) => {
+export const onRequest: PagesFunction<Env> = async ({
+  request,
+  params,
+  env,
+}) => {
   const url = new URL(request.url)
   const path = (params.path as string) || ""
   const target = `${UPSTREAM}/${path}${url.search}`
 
-const headers = new Headers(request.headers)
+  const headers = new Headers(request.headers)
 
-// Cloudflare系ヘッダを削除
-headers.delete("host")
-headers.delete("cf-ray")
-headers.delete("cf-connecting-ip")
-headers.delete("x-forwarded-for")
-headers.delete("x-real-ip")
+  // Cloudflare / Proxy 系ヘッダを削除
+  headers.delete("host")
+  headers.delete("cf-ray")
+  headers.delete("cf-connecting-ip")
+  headers.delete("x-forwarded-for")
+  headers.delete("x-real-ip")
 
-// Chrome UAを偽装
-headers.set(
-  "user-agent",
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-)
+  // ブラウザ固有ヘッダを削除
+  headers.delete("sec-fetch-site")
+  headers.delete("sec-fetch-mode")
+  headers.delete("sec-fetch-dest")
+  headers.delete("sec-fetch-user")
+  headers.delete("sec-ch-ua")
+  headers.delete("sec-ch-ua-mobile")
+  headers.delete("sec-ch-ua-platform")
 
-headers.set("accept", "*/*")
-headers.set("accept-language", "ja,en-US;q=0.9,en;q=0.8")
-headers.set("referer", "https://pawchive.pw/")
-headers.set("origin", "https://pawchive.pw")
+  // Origin / Referer は一旦送らない
+  headers.delete("origin")
+  headers.delete("referer")
 
-const session =
-  request.headers.get("x-pawchive-session") ||
-  env?.PAWCHIVE_SESSION
+  // Chrome UA 偽装
+  headers.set(
+    "user-agent",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+  )
 
-if (session) {
-  headers.set("cookie", `session=${session}`)
-}
+  headers.set(
+    "accept",
+    "application/json,text/plain,*/*"
+  )
 
-const upstream = await fetch(target, {
-  method: request.method,
-  headers,
-  body: ["GET", "HEAD"].includes(request.method)
-    ? undefined
-    : request.body,
-  redirect: "manual",
-})
+  headers.set(
+    "accept-language",
+    "ja,en-US;q=0.9,en;q=0.8"
+  )
 
-if (!upstream.ok) {
-  const text = await upstream.text()
+  // セッションキー
+  const session =
+    request.headers.get("x-pawchive-session") ??
+    env.PAWCHIVE_SESSION
 
-  return new Response(text, {
-    status: upstream.status,
-    headers: {
-      "content-type": "text/html; charset=utf-8"
-    }
+  if (session) {
+    headers.set("cookie", `session=${session}`)
+  }
+
+  console.log("[REQUEST]", {
+    path,
+    target,
+    method: request.method,
+    ua: headers.get("user-agent"),
+    hasSession: !!session,
   })
-}
+
+  const upstream = await fetch(target, {
+    method: request.method,
+    headers,
+    body:
+      request.method === "GET" ||
+      request.method === "HEAD"
+        ? undefined
+        : request.body,
+    redirect: "manual",
+  })
+
+  console.log("[UPSTREAM]", {
+    target,
+    status: upstream.status,
+    statusText: upstream.statusText,
+  })
+
+  // エラー時は内容をそのまま見られるようにする
+  if (!upstream.ok) {
+    const text = await upstream.text()
+
+    console.error("[UPSTREAM ERROR]", {
+      target,
+      status: upstream.status,
+      statusText: upstream.statusText,
+      body: text.slice(0, 4000),
+    })
+
+    return new Response(
+      JSON.stringify(
+        {
+          target,
+          status: upstream.status,
+          statusText: upstream.statusText,
+          body: text.slice(0, 4000),
+        },
+        null,
+        2
+      ),
+      {
+        status: upstream.status,
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+        },
+      }
+    )
+  }
 
   const resHeaders = new Headers()
-  resHeaders.set("content-type", upstream.headers.get("content-type") || "application/json")
-  const cc = upstream.headers.get("cache-control")
-  resHeaders.set("cache-control", cc || (request.method === "GET" ? "public, max-age=60" : "no-store"))
-  if (upstream.headers.has("set-cookie")) {
-    // アップストリームの cookie はクライアントに転送しない (session は明示管理)
-    void upstream.headers.get("set-cookie")
-  }
+
+  resHeaders.set(
+    "content-type",
+    upstream.headers.get("content-type") ??
+      "application/json"
+  )
+
+  const cacheControl =
+    upstream.headers.get("cache-control")
+
+  resHeaders.set(
+    "cache-control",
+    cacheControl ??
+      (
+        request.method === "GET"
+          ? "public, max-age=60"
+          : "no-store"
+      )
+  )
 
   return new Response(upstream.body, {
     status: upstream.status,
