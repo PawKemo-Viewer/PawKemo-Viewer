@@ -1,3 +1,7 @@
+import {
+  invoke
+} from "@tauri-apps/api/core"
+
 import type {
   PawAnnouncement,
   PawComment,
@@ -17,8 +21,6 @@ import type {
 const SETTINGS_KEY = "pawchive-settings"
 
 export interface Settings {
-  /** API ベース URL。既定は同オリジンの /api/v1 (Vite プロキシ or CF Pages Functions) */
-  apiBase: string
   /** pawchive.pw の session cookie の値 (お気に入り同期に使用) */
   sessionKey: string
 }
@@ -34,7 +36,7 @@ export function loadSettings(): Settings {
 }
 
 function defaultSettings(): Settings {
-  return { apiBase: "/api/v1", sessionKey: "" }
+  return { sessionKey: "" }
 }
 
 export function saveSettings(s: Settings) {
@@ -121,7 +123,7 @@ interface CacheEntry {
 
 const getCache = new Map<string, CacheEntry>()
 
-function cacheGet<T>(key: string): CacheEntry | undefined {
+function cacheGet(key: string): CacheEntry | undefined {
   const e = getCache.get(key)
   if (!e) return undefined
   if (e.expires < Date.now()) {
@@ -142,9 +144,8 @@ function cachePut(key: string, entry: CacheEntry) {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const base = settings.apiBase.replace(/\/$/, "")
   const method = (init?.method || "GET").toUpperCase()
-  const url = `${base}${path}`
+  const url = `${path}`
 
   // GET はキャッシュ / 実行中リクエストの統合を行う
   if (method === "GET") {
@@ -156,27 +157,35 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   const exec = scheduled(async () => {
-    const headers = new Headers(init?.headers)
-    if (settings.sessionKey) headers.set("x-pawchive-session", settings.sessionKey)
-    const res = await fetch(url, { ...init, headers })
-    if (!res.ok) {
-      let msg = `${res.status}`
-      try {
-        const body = await res.text()
-        try {
-          const j = JSON.parse(body)
-          msg = j.error || msg
-        } catch {
-          msg = body.slice(0, 200) || msg
+    try {
+      const result = await invoke<string>(
+        "api_request",
+        {
+          path,
+          method,
+          sessionKey:
+            settings.sessionKey || null,
         }
+      )
+
+      try {
+        return JSON.parse(result) as T
       } catch {
-        /* ignore */
+        return result as T
       }
-      throw new ApiError(res.status, msg)
+
+    } catch (err) {
+
+      const message =
+        err instanceof Error
+          ? err.message
+          : String(err)
+
+      throw new ApiError(
+        500,
+        message
+      )
     }
-    const ct = res.headers.get("content-type") || ""
-    if (ct.includes("application/json")) return (await res.json()) as T
-    return (await res.text()) as unknown as T
   })
 
   if (method === "GET") {
@@ -330,47 +339,31 @@ export function postUrl(service: string, userId: string, postId: string) {
 // ---------------------------------------------------------------------------
 
 /** ホットリンク対策 (Referer チェック) をしている可能性のあるホスト */
+/*
 const HOTLINK_HOSTS = ["fanbox.cc", "patreon.com", "patreonusercontent.com", "pximg.net"]
 
-function isHotlinkHost(hostname: string): boolean {
-  return HOTLINK_HOSTS.some((d) => hostname === d || hostname.endsWith("." + d))
+function isHotlinkHost(
+  _hostname: string
+): boolean {
+  return false
 }
-
+*/
 /** リファラーチェックでブロックされる URL を同一オリジンプロキシ経由に変換する。
  *  対象外の URL (n1.pawchive.pw のミラー等) はそのまま返す。 */
-export function proxyFileUrl(url: string): string {
-  if (!url) return ""
-  let h: URL
-  try {
-    h = new URL(url)
-  } catch {
-    return url // 相対 URL・不正 URL はそのまま
-  }
-  if (h.protocol !== "https:" && h.protocol !== "http:") return url
-  if (!isHotlinkHost(h.hostname)) return url
-  return `/api/file?u=${encodeURIComponent(h.toString())}`
+export function proxyFileUrl(
+  url: string
+): string {
+  return url
 }
 
 /** 投稿本文から張られた外部リンクをプロキシ経由に変換する。
  *  リンク先がリファラー (元サイト = fanbox / patreon) を検証してブロックする
  *  ケースに対応。fanbox / patreon / pawchive 自体へのリンクはそのまま。 */
-export function proxyLinkUrl(url: string, service?: string): string {
-  if (!url) return ""
-  let h: URL
-  try {
-    h = new URL(url)
-  } catch {
-    return url
-  }
-  if (h.protocol !== "https:" && h.protocol !== "http:") return url
-  // ミラー/公式 SPA はそのまま開く (リファラーチェックがなく、
-  // 同一オリジン化すると SPA が壊れるため)
-  if (isHotlinkHost(h.hostname) || h.hostname.endsWith("pawchive.pw")) return url
-  // 同一オリジンへのリンクはそのまま
-  if (h.origin === location.origin) return url
-  // 元サービスに対応したリファラーを指定
-  const r = service === "patreon" ? "https://www.patreon.com/" : "https://www.fanbox.cc/"
-  return `/api/file?u=${encodeURIComponent(h.toString())}&r=${encodeURIComponent(r)}`
+export function proxyLinkUrl(
+  url: string,
+  _service?: string
+): string {
+  return url
 }
 
 export function creatorUrl(service: string, userId: string) {

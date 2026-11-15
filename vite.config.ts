@@ -1,7 +1,6 @@
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
 import { VitePWA } from "vite-plugin-pwa"
-import { handleProxy } from "./functions/api/_proxy"
 
 // ローカル開発時は /api/v1 を pawchive.pw に直接プロキシして CORS を回避する。
 // 本番 (Cloudflare Pages) では functions/api/v1/[[path]].ts が同一オリジンで応答する。

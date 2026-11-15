@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { api, getSettings, clearApiCache, ApiError } from "../api"
 import type { PawPost, AccountFavorite } from "../types"
-import { getAllSeen, setSeen, deleteSeen, getSeen } from "../db"
+import { getAllSeen, setSeen, getSeen } from "../db"
 import { loadFollows, unfollow } from "../follows"
-import { Spinner, ErrorBox, Empty, fmtDate } from "../components"
+import { ErrorBox, Empty, fmtDate } from "../components"
 import { navigate } from "../router"
 
 /** 自動新着チェックのクールダウン (この間はネットワークを叩かない) */

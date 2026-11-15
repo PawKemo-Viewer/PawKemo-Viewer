@@ -1,2 +1,39 @@
+# dependencies
 node_modules/
-.wrangler/
+
+# build
+dist/
+
+# vite
+.vite/
+.vite-temp/
+
+# typescript
+*.tsbuildinfo
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# tauri build
+src-tauri/target/
+
+# tauri bundles
+src-tauri/gen/
+src-tauri/binaries/
+
+# rust
+Cargo.lock
+
+# windows
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# env
+.env
+.env.*

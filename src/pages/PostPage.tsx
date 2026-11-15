@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { api, fileUrl, postUrl, creatorUrl, thumbUrl, isVideoFile } from "../api"
+import { api, fileUrl, postUrl, thumbUrl, isVideoFile } from "../api"
 import type { PawComment, PawPost, PawRevision, HashLookupResult, PawFile } from "../types"
 import {
   Spinner,

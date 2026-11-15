@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { api, ApiError } from "../api"
+import { api } from "../api"
 import type { PawPost } from "../types"
 import { PostGrid, ErrorBox } from "../components"
 import { useNavigate } from "../router"

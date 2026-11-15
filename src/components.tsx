@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import type { PawFile, PawPost } from "./types"
 import { fileUrl, thumbUrl, proxyFileUrl, proxyLinkUrl } from "./api"
 import { navigate } from "./router"
