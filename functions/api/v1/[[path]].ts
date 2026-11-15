@@ -5,7 +5,6 @@
 const UPSTREAM = "https://pawchive.pw/api/v1"
 
 interface Env {
-  /** npx wrangler pages secret put PAWCHIVE_SESSION で設定した既定セッションキー (任意) */
   PAWCHIVE_SESSION?: string
 }
 
@@ -15,32 +14,17 @@ export const onRequest: PagesFunction<Env> = async ({
   env,
 }) => {
   const url = new URL(request.url)
-  const path = (params.path as string) || ""
+  const path = Array.isArray(params.path)
+    ? params.path.join("/")
+    : (params.path as string) || ""
+
   const target = `${UPSTREAM}/${path}${url.search}`
 
-  const headers = new Headers(request.headers)
+  //
+  // 完全ホワイトリスト方式
+  //
+  const headers = new Headers()
 
-  // Cloudflare / Proxy 系ヘッダを削除
-  headers.delete("host")
-  headers.delete("cf-ray")
-  headers.delete("cf-connecting-ip")
-  headers.delete("x-forwarded-for")
-  headers.delete("x-real-ip")
-
-  // ブラウザ固有ヘッダを削除
-  headers.delete("sec-fetch-site")
-  headers.delete("sec-fetch-mode")
-  headers.delete("sec-fetch-dest")
-  headers.delete("sec-fetch-user")
-  headers.delete("sec-ch-ua")
-  headers.delete("sec-ch-ua-mobile")
-  headers.delete("sec-ch-ua-platform")
-
-  // Origin / Referer を pawchive 本体に偽装
-  headers.set("referer", "https://pawchive.pw/")
-  headers.set("origin", "https://pawchive.pw")
-
-  // Chrome UA 偽装
   headers.set(
     "user-agent",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
@@ -56,21 +40,62 @@ export const onRequest: PagesFunction<Env> = async ({
     "ja,en-US;q=0.9,en;q=0.8"
   )
 
-  // セッションキー
+  headers.set(
+    "accept-encoding",
+    "gzip, deflate, br"
+  )
+
+  headers.set(
+    "referer",
+    "https://pawchive.pw/"
+  )
+
+  headers.set(
+    "origin",
+    "https://pawchive.pw"
+  )
+
+  headers.set(
+    "cache-control",
+    "no-cache"
+  )
+
+  headers.set(
+    "pragma",
+    "no-cache"
+  )
+
+  const contentType =
+    request.headers.get("content-type")
+
+  if (contentType) {
+    headers.set("content-type", contentType)
+  }
+
   const session =
     request.headers.get("x-pawchive-session") ??
     env.PAWCHIVE_SESSION
 
   if (session) {
-    headers.set("cookie", `session=${session}`)
+    headers.set(
+      "cookie",
+      `session=${session}`
+    )
   }
 
-  console.log("[REQUEST META]", {
-    path,
-    target,
-    method: request.method,
-    hasSession: !!session,
-  })
+  console.log(
+    "[REQUEST META]",
+    JSON.stringify(
+      {
+        path,
+        target,
+        method: request.method,
+        hasSession: !!session,
+      },
+      null,
+      2
+    )
+  )
 
   console.log(
     "[REQUEST HEADERS]",
@@ -92,39 +117,35 @@ export const onRequest: PagesFunction<Env> = async ({
     redirect: "manual",
   })
 
-  console.log("[UPSTREAM]", {
-    target,
-    status: upstream.status,
-    statusText: upstream.statusText,
-  })
-
-  console.log("[RESPONSE HEADERS SUMMARY]", {
-    server: upstream.headers.get("server"),
-    cfCacheStatus: upstream.headers.get("cf-cache-status"),
-    contentType: upstream.headers.get("content-type"),
-    location: upstream.headers.get("location"),
-    cfRay: upstream.headers.get("cf-ray"),
-    cfMitigated: upstream.headers.get("cf-mitigated"),
-  })
-
   console.log(
-    "[RESPONSE HEADERS FULL]",
+    "[UPSTREAM]",
     JSON.stringify(
-      Object.fromEntries(upstream.headers.entries()),
+      {
+        target,
+        status: upstream.status,
+        statusText: upstream.statusText,
+      },
       null,
       2
     )
   )
 
-  // エラー時は詳細デバッグJSONを返す
+  console.log(
+    "[RESPONSE HEADERS]",
+    JSON.stringify(
+      Object.fromEntries(
+        upstream.headers.entries()
+      ),
+      null,
+      2
+    )
+  )
+
+  //
+  // エラー時は詳細情報を返す
+  //
   if (!upstream.ok) {
     const text = await upstream.text()
-
-    const requestHeaders =
-      Object.fromEntries(headers.entries())
-
-    const responseHeaders =
-      Object.fromEntries(upstream.headers.entries())
 
     const debug = {
       timestamp: new Date().toISOString(),
@@ -134,24 +155,38 @@ export const onRequest: PagesFunction<Env> = async ({
         originalUrl: request.url,
         path,
         target,
-        headers: requestHeaders,
+        headers: Object.fromEntries(
+          headers.entries()
+        ),
       },
 
       response: {
         status: upstream.status,
         statusText: upstream.statusText,
-        headers: responseHeaders,
+
+        headers: Object.fromEntries(
+          upstream.headers.entries()
+        ),
+
         body: text.slice(0, 20000),
       },
     }
 
     console.error(
       "[PAWCHIVE DEBUG]",
-      JSON.stringify(debug, null, 2)
+      JSON.stringify(
+        debug,
+        null,
+        2
+      )
     )
 
     return new Response(
-      JSON.stringify(debug, null, 2),
+      JSON.stringify(
+        debug,
+        null,
+        2
+      ),
       {
         status: upstream.status,
         headers: {
@@ -162,6 +197,9 @@ export const onRequest: PagesFunction<Env> = async ({
     )
   }
 
+  //
+  // 正常レスポンス
+  //
   const resHeaders = new Headers()
 
   resHeaders.set(
