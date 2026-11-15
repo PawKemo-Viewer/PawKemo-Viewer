@@ -163,7 +163,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         {
           path,
           method,
-          sessionKey:
+          session_key:
             settings.sessionKey || null,
         }
       )

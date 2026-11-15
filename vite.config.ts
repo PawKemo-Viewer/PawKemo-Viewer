@@ -1,6 +1,5 @@
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
-import { VitePWA } from "vite-plugin-pwa"
 
 // ローカル開発時は /api/v1 を pawchive.pw に直接プロキシして CORS を回避する。
 // 本番 (Cloudflare Pages) では functions/api/v1/[[path]].ts が同一オリジンで応答する。
@@ -98,23 +97,6 @@ async function devFileProxyMiddleware(req, res, next) {
 export default defineConfig({
   plugins: [
     react(),
-    VitePWA({
-      registerType: "prompt",
-      includeAssets: ["favicon.svg"],
-      manifest: {
-        name: "Pawchive Viewer",
-        short_name: "PawViewer",
-        description: "pawchive.pw を快適に閲覧するビューア",
-        theme_color: "#14161a",
-        background_color: "#14161a",
-        display: "standalone",
-        start_url: "/",
-        icons: [
-          { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
-        ],
-      },
-    }),
     {
       name: "dev-login-middleware",
       configureServer(server) {
