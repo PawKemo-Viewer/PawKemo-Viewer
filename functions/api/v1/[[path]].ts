@@ -36,10 +36,9 @@ export const onRequest: PagesFunction<Env> = async ({
   headers.delete("sec-ch-ua-mobile")
   headers.delete("sec-ch-ua-platform")
 
-  // Origin / Referer は一旦送らない
-  headers.delete("origin")
-  headers.delete("referer")
-
+// Origin / Referer を pawchive 本体に偽装
+headers.set("referer", "https://pawchive.pw/")
+headers.set("origin", "https://pawchive.pw")
   // Chrome UA 偽装
   headers.set(
     "user-agent",
@@ -65,13 +64,13 @@ export const onRequest: PagesFunction<Env> = async ({
     headers.set("cookie", `session=${session}`)
   }
 
-  console.log("[REQUEST]", {
-    path,
-    target,
-    method: request.method,
-    ua: headers.get("user-agent"),
-    hasSession: !!session,
-  })
+console.log("[REQUEST HEADERS]", {
+  referer: headers.get("referer"),
+  origin: headers.get("origin"),
+  accept: headers.get("accept"),
+  acceptLanguage: headers.get("accept-language"),
+  cookie: headers.has("cookie"),
+})
 
   const upstream = await fetch(target, {
     method: request.method,
@@ -83,7 +82,12 @@ export const onRequest: PagesFunction<Env> = async ({
         : request.body,
     redirect: "manual",
   })
-
+console.log("[RESPONSE HEADERS]", {
+  server: upstream.headers.get("server"),
+  cfCacheStatus: upstream.headers.get("cf-cache-status"),
+  contentType: upstream.headers.get("content-type"),
+  location: upstream.headers.get("location"),
+})
   console.log("[UPSTREAM]", {
     target,
     status: upstream.status,
