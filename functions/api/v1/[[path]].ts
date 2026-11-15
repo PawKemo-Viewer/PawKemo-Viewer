@@ -14,25 +14,53 @@ export const onRequest: PagesFunction<Env> = async ({ request, params, env }) =>
   const path = (params.path as string) || ""
   const target = `${UPSTREAM}/${path}${url.search}`
 
-  const headers = new Headers()
-  const ct = request.headers.get("content-type")
-  if (ct) headers.set("content-type", ct)
-  const ua = request.headers.get("user-agent")
-  headers.set("user-agent", ua || "PawchiveViewer/1.0")
+const headers = new Headers(request.headers)
 
-  const session =
-    request.headers.get("x-pawchive-session") ||
-    (env ? env.PAWCHIVE_SESSION : undefined)
-  if (session) {
-    headers.set("cookie", `session=${session}`)
-  }
+// Cloudflare系ヘッダを削除
+headers.delete("host")
+headers.delete("cf-ray")
+headers.delete("cf-connecting-ip")
+headers.delete("x-forwarded-for")
+headers.delete("x-real-ip")
 
-  const upstream = await fetch(target, {
-    method: request.method,
-    headers,
-    body: ["GET", "HEAD"].includes(request.method) ? undefined : request.body,
-    redirect: "follow",
+// Chrome UAを偽装
+headers.set(
+  "user-agent",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+)
+
+headers.set("accept", "*/*")
+headers.set("accept-language", "ja,en-US;q=0.9,en;q=0.8")
+headers.set("referer", "https://pawchive.pw/")
+headers.set("origin", "https://pawchive.pw")
+
+const session =
+  request.headers.get("x-pawchive-session") ||
+  env?.PAWCHIVE_SESSION
+
+if (session) {
+  headers.set("cookie", `session=${session}`)
+}
+
+const upstream = await fetch(target, {
+  method: request.method,
+  headers,
+  body: ["GET", "HEAD"].includes(request.method)
+    ? undefined
+    : request.body,
+  redirect: "manual",
+})
+
+if (!upstream.ok) {
+  const text = await upstream.text()
+
+  return new Response(text, {
+    status: upstream.status,
+    headers: {
+      "content-type": "text/html; charset=utf-8"
+    }
   })
+}
 
   const resHeaders = new Headers()
   resHeaders.set("content-type", upstream.headers.get("content-type") || "application/json")
