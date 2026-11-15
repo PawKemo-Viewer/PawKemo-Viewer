@@ -36,9 +36,10 @@ export const onRequest: PagesFunction<Env> = async ({
   headers.delete("sec-ch-ua-mobile")
   headers.delete("sec-ch-ua-platform")
 
-// Origin / Referer を pawchive 本体に偽装
-headers.set("referer", "https://pawchive.pw/")
-headers.set("origin", "https://pawchive.pw")
+  // Origin / Referer を pawchive 本体に偽装
+  headers.set("referer", "https://pawchive.pw/")
+  headers.set("origin", "https://pawchive.pw")
+
   // Chrome UA 偽装
   headers.set(
     "user-agent",
@@ -64,13 +65,21 @@ headers.set("origin", "https://pawchive.pw")
     headers.set("cookie", `session=${session}`)
   }
 
-console.log("[REQUEST HEADERS]", {
-  referer: headers.get("referer"),
-  origin: headers.get("origin"),
-  accept: headers.get("accept"),
-  acceptLanguage: headers.get("accept-language"),
-  cookie: headers.has("cookie"),
-})
+  console.log("[REQUEST META]", {
+    path,
+    target,
+    method: request.method,
+    hasSession: !!session,
+  })
+
+  console.log(
+    "[REQUEST HEADERS]",
+    JSON.stringify(
+      Object.fromEntries(headers.entries()),
+      null,
+      2
+    )
+  )
 
   const upstream = await fetch(target, {
     method: request.method,
@@ -82,44 +91,72 @@ console.log("[REQUEST HEADERS]", {
         : request.body,
     redirect: "manual",
   })
-console.log("[RESPONSE HEADERS]", {
-  server: upstream.headers.get("server"),
-  cfCacheStatus: upstream.headers.get("cf-cache-status"),
-  contentType: upstream.headers.get("content-type"),
-  location: upstream.headers.get("location"),
-})
+
   console.log("[UPSTREAM]", {
     target,
     status: upstream.status,
     statusText: upstream.statusText,
   })
 
-  // エラー時は内容をそのまま見られるようにする
+  console.log("[RESPONSE HEADERS SUMMARY]", {
+    server: upstream.headers.get("server"),
+    cfCacheStatus: upstream.headers.get("cf-cache-status"),
+    contentType: upstream.headers.get("content-type"),
+    location: upstream.headers.get("location"),
+    cfRay: upstream.headers.get("cf-ray"),
+    cfMitigated: upstream.headers.get("cf-mitigated"),
+  })
+
+  console.log(
+    "[RESPONSE HEADERS FULL]",
+    JSON.stringify(
+      Object.fromEntries(upstream.headers.entries()),
+      null,
+      2
+    )
+  )
+
+  // エラー時は詳細デバッグJSONを返す
   if (!upstream.ok) {
     const text = await upstream.text()
 
-    console.error("[UPSTREAM ERROR]", {
-      target,
-      status: upstream.status,
-      statusText: upstream.statusText,
-      body: text.slice(0, 4000),
-    })
+    const requestHeaders =
+      Object.fromEntries(headers.entries())
+
+    const responseHeaders =
+      Object.fromEntries(upstream.headers.entries())
+
+    const debug = {
+      timestamp: new Date().toISOString(),
+
+      request: {
+        method: request.method,
+        originalUrl: request.url,
+        path,
+        target,
+        headers: requestHeaders,
+      },
+
+      response: {
+        status: upstream.status,
+        statusText: upstream.statusText,
+        headers: responseHeaders,
+        body: text.slice(0, 20000),
+      },
+    }
+
+    console.error(
+      "[PAWCHIVE DEBUG]",
+      JSON.stringify(debug, null, 2)
+    )
 
     return new Response(
-      JSON.stringify(
-        {
-          target,
-          status: upstream.status,
-          statusText: upstream.statusText,
-          body: text.slice(0, 4000),
-        },
-        null,
-        2
-      ),
+      JSON.stringify(debug, null, 2),
       {
         status: upstream.status,
         headers: {
-          "content-type": "application/json; charset=utf-8",
+          "content-type":
+            "application/json; charset=utf-8",
         },
       }
     )
