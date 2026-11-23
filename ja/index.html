@@ -9,6 +9,7 @@
 <link rel="alternate" hreflang="en" href="../en/">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/release.js" defer></script>
+<script src="../assets/gallery.js" defer></script>
 </head>
 <body>
 <header class="shell site-header">
@@ -31,11 +32,21 @@
     <img class="hero-icon" src="../assets/icon.png" width="246" height="246" alt="">
   </section>
   <section class="preview" aria-labelledby="screens">
-    <h2 id="screens">PCとスマートフォンの画面</h2>
-    <p>投稿を検索し、一覧と詳細を行き来できます。</p>
+    <div class="gallery-head">
+      <h2 id="screens">アプリの画面</h2>
+      <div class="gallery-theme" role="group" aria-label="画面例のテーマ" hidden>
+        <button type="button" data-theme-choice="light" aria-pressed="false">ライト</button>
+        <button type="button" data-theme-choice="dark" aria-pressed="true">ダーク</button>
+      </div>
+    </div>
+    <p>投稿一覧、クリエイター検索、フォロー一覧をサンプルデータで紹介します。</p>
     <div class="screens">
-      <figure><img src="../assets/desktop.png" alt="左にナビゲーション、右に投稿一覧があるデスクトップ画面" width="1240" height="760" loading="lazy"><figcaption>デスクトップ表示（サンプル投稿）</figcaption></figure>
-      <figure><img src="../assets/mobile.png" alt="画面下にメニューがあるモバイルの投稿一覧" width="390" height="780" loading="lazy"><figcaption>モバイル表示（サンプル投稿）</figcaption></figure>
+      <figure><img src="../assets/screens/ja-dark-home-desktop.png" data-light="../assets/screens/ja-light-home-desktop.png" alt="左にメニュー、右に投稿一覧がある画面" width="1240" height="760" loading="lazy"><figcaption>投稿一覧（PC）</figcaption></figure>
+      <figure><img src="../assets/screens/ja-dark-home-mobile.png" data-light="../assets/screens/ja-light-home-mobile.png" alt="画面下にメニューがある投稿一覧" width="390" height="780" loading="lazy"><figcaption>投稿一覧（モバイル）</figcaption></figure>
+    </div>
+    <div class="screens">
+      <figure><img src="../assets/screens/ja-dark-creators.png" data-light="../assets/screens/ja-light-creators.png" alt="名前を入力し一致するクリエイターを表示した検索画面" width="1240" height="760" loading="lazy"><figcaption>クリエイター検索（PC）</figcaption></figure>
+      <figure><img src="../assets/screens/ja-dark-following.png" data-light="../assets/screens/ja-light-following.png" alt="フォロー中のクリエイターとサービスの一覧" width="390" height="780" loading="lazy"><figcaption>フォロー一覧（モバイル）</figcaption></figure>
     </div>
   </section>
   <section class="download" id="download" aria-labelledby="download-heading">

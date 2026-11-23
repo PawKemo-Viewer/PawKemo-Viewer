@@ -63,3 +63,38 @@ figcaption { margin-top: .5rem; color: var(--muted); font-size: .85rem; }
   .screens { grid-template-columns: minmax(0, 1fr); }
   .screens figure:nth-child(2) { width: min(100%, 320px); }
 }
+
+.gallery-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: .75rem;
+}
+.gallery-theme:not([hidden]) {
+  display: flex;
+  gap: .25rem;
+  padding: .25rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+}
+.gallery-theme button {
+  min-height: 36px;
+  padding: .25rem .8rem;
+  border: 0;
+  border-radius: 7px;
+  font: inherit;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+}
+.gallery-theme button[aria-pressed="true"] {
+  color: #092422;
+  background: var(--accent);
+  font-weight: 700;
+}
+.gallery-theme button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}

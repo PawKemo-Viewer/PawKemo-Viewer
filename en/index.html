@@ -9,6 +9,7 @@
 <link rel="alternate" hreflang="ja" href="../ja/">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/release.js" defer></script>
+<script src="../assets/gallery.js" defer></script>
 </head>
 <body>
 <header class="shell site-header">
@@ -31,11 +32,21 @@
     <img class="hero-icon" src="../assets/icon.png" width="246" height="246" alt="">
   </section>
   <section class="preview" aria-labelledby="screens">
-    <h2 id="screens">Desktop and mobile views</h2>
-    <p>Search posts and move between the feed and individual posts.</p>
+    <div class="gallery-head">
+      <h2 id="screens">App screenshots</h2>
+      <div class="gallery-theme" role="group" aria-label="Screenshot theme" hidden>
+        <button type="button" data-theme-choice="light" aria-pressed="false">Light</button>
+        <button type="button" data-theme-choice="dark" aria-pressed="true">Dark</button>
+      </div>
+    </div>
+    <p>Explore the post feed, creator search and following list with sample data.</p>
     <div class="screens">
-      <figure><img src="../assets/desktop.png" alt="Desktop feed with left-hand navigation" width="1240" height="760" loading="lazy"><figcaption>Desktop view with sample posts</figcaption></figure>
-      <figure><img src="../assets/mobile.png" alt="Mobile feed with bottom navigation" width="390" height="780" loading="lazy"><figcaption>Mobile view with sample posts</figcaption></figure>
+      <figure><img src="../assets/screens/en-dark-home-desktop.png" data-light="../assets/screens/en-light-home-desktop.png" alt="Post feed with the menu on the left" width="1240" height="760" loading="lazy"><figcaption>Post feed (desktop)</figcaption></figure>
+      <figure><img src="../assets/screens/en-dark-home-mobile.png" data-light="../assets/screens/en-light-home-mobile.png" alt="Post feed with navigation along the bottom" width="390" height="780" loading="lazy"><figcaption>Post feed (mobile)</figcaption></figure>
+    </div>
+    <div class="screens">
+      <figure><img src="../assets/screens/en-dark-creators.png" data-light="../assets/screens/en-light-creators.png" alt="Creator search displaying results matching the entered name" width="1240" height="760" loading="lazy"><figcaption>Creator search (desktop)</figcaption></figure>
+      <figure><img src="../assets/screens/en-dark-following.png" data-light="../assets/screens/en-light-following.png" alt="List of followed creators and their services" width="390" height="780" loading="lazy"><figcaption>Following list (mobile)</figcaption></figure>
     </div>
   </section>
   <section class="download" id="download" aria-labelledby="download-heading">
