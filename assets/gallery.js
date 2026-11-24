@@ -1,20 +1,48 @@
-const galleryControls = document.querySelector(".gallery-theme");
-const galleryImages = Array.from(document.querySelectorAll(".screens img[data-light]"), (image) => ({
-  image,
-  light: image.dataset.light,
-  dark: image.getAttribute("src"),
-}));
+const controls = document.querySelector(".gallery-controls");
+const gallery = document.querySelector("#screen-gallery");
 
-if (galleryControls && galleryImages.length > 0) {
-  const choices = galleryControls.querySelectorAll("[data-theme-choice]");
+if (controls && gallery) {
+  const deviceChoices = controls.querySelectorAll("[data-device-choice]");
+  const themeChoices = controls.querySelectorAll("[data-theme-choice]");
+  const ua = navigator.userAgent;
+  const desktopModeIPad = /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
+  const isMobile = desktopModeIPad || navigator.userAgentData?.mobile ||
+    /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua);
+  let device = isMobile ? "mobile" : "desktop";
+  let theme = "dark";
 
-  for (const choice of choices) {
-    choice.addEventListener("click", () => {
-      const theme = choice.dataset.themeChoice;
-      for (const item of galleryImages) item.image.src = item[theme];
-      for (const button of choices) button.setAttribute("aria-pressed", String(button === choice));
-    });
+  function showGallery() {
+    const template = document.querySelector(`template[data-gallery-template="${device}"]`);
+    if (!template) return;
+    const screens = template.content.cloneNode(true);
+    if (theme === "light") {
+      for (const image of screens.querySelectorAll("img[data-light]")) {
+        image.src = image.dataset.light;
+        image.closest("a").href = image.dataset.light;
+      }
+    }
+    gallery.dataset.device = device;
+    gallery.replaceChildren(screens);
+    for (const button of deviceChoices) {
+      button.setAttribute("aria-pressed", String(button.dataset.deviceChoice === device));
+    }
+    for (const button of themeChoices) {
+      button.setAttribute("aria-pressed", String(button.dataset.themeChoice === theme));
+    }
   }
 
-  galleryControls.hidden = false;
+  for (const button of deviceChoices) {
+    button.addEventListener("click", () => {
+      device = button.dataset.deviceChoice;
+      showGallery();
+    });
+  }
+  for (const button of themeChoices) {
+    button.addEventListener("click", () => {
+      theme = button.dataset.themeChoice;
+      showGallery();
+    });
+  }
+  showGallery();
+  controls.hidden = false;
 }

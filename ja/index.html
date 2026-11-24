@@ -15,6 +15,7 @@
 <header class="shell site-header">
   <a href="./" class="brand"><img src="../assets/icon.png" alt="" width="38" height="38">PawKemoViewer</a>
   <nav aria-label="ページと表示言語">
+    <a href="#features">使い方</a>
     <a href="#download">ダウンロード</a>
     <a href="../en/" hreflang="en" lang="en">English</a>
   </nav>
@@ -23,7 +24,7 @@
   <section class="hero" aria-labelledby="intro">
     <div>
       <h1 id="intro">PawKemoViewer</h1>
-      <p>Pawchive の投稿を PC とスマートフォンで閲覧できる非公式ビューアー。</p>
+      <p>PawchiveのFANBOX・Patreon投稿を、一覧、クリエイター検索、フォローから閲覧できる非公式ビューアーです。スマートフォンでは画面下のメニュー、PCでは左のメニューから各機能に移動できます。</p>
       <div class="actions">
         <a class="primary" href="#download">ダウンロード <span aria-hidden="true">↓</span></a>
         <a href="https://github.com/nsmr0604/PawKemoViewer">ソースコード <span aria-hidden="true">↗</span></a>
@@ -31,27 +32,48 @@
     </div>
     <img class="hero-icon" src="../assets/icon.png" width="246" height="246" alt="">
   </section>
+  <section class="features" id="features" aria-labelledby="features-heading">
+    <h2 id="features-heading">主な機能と使い方</h2>
+    <div class="feature-grid">
+      <article><h3>投稿とクリエイターを探す</h3><p>ホームでは投稿を一覧表示できます。クリエイター画面では名前・ID・対応サービスのURLから検索できます。投稿タイトル下のアイコンや名前から、クリエイターのページへ移動できます。</p></article>
+      <article><h3>投稿本文と元サイトを開く</h3><p>対応するFANBOX・Patreonの投稿リンクは、Pawchiveで見つかればアプリ内の投稿に移動します。投稿上部の「サイトで開く」や「fanboxで開く」などは、OSのブラウザで開きます。モバイルの外部ページビューには、現在のURLが表示されます。</p></article>
+      <article><h3>フォローとお気に入り</h3><p>Pawchiveアカウントでログインすると、フォローとお気に入りを同期できます。フォロー画面では新着投稿を確認し、未読の投稿を開けます。</p></article>
+      <article><h3>画像と通信量を調整する</h3><p>投稿のサムネイルをキャッシュして再利用します。設定からキャッシュ件数や省データモードを変更でき、保存済みのサムネイルは省データモードでも表示されます。</p></article>
+      <article><h3>言語・バックアップ</h3><p>日本語と英語を切り替えられます。追加フォルダーに有効なJSONを置き、「言語フォルダーを同期」で反映します。設定のバックアップはJSONで書き出し・復元できます。</p></article>
+      <article><h3>対応端末とインストール</h3><p>Windows・Linux・AppleシリコンMac・Android・iPhone/iPadに対応しています。下の一覧から対応するファイルを選びます。iPhone/iPad用のIPAには、インストール前に署名が必要です。</p></article>
+    </div>
+  </section>
   <section class="preview" aria-labelledby="screens">
     <div class="gallery-head">
       <h2 id="screens">アプリの画面</h2>
-      <div class="gallery-theme" role="group" aria-label="画面例のテーマ" hidden>
-        <button type="button" data-theme-choice="light" aria-pressed="false">ライト</button>
-        <button type="button" data-theme-choice="dark" aria-pressed="true">ダーク</button>
+      <div class="gallery-controls" hidden>
+        <div class="gallery-choice" role="group" aria-label="画面例の端末">
+          <button type="button" data-device-choice="desktop" aria-controls="screen-gallery" aria-pressed="false">PC</button>
+          <button type="button" data-device-choice="mobile" aria-controls="screen-gallery" aria-pressed="false">モバイル</button>
+        </div>
+        <div class="gallery-choice" role="group" aria-label="画面例のテーマ">
+          <button type="button" data-theme-choice="light" aria-controls="screen-gallery" aria-pressed="false">ライト</button>
+          <button type="button" data-theme-choice="dark" aria-controls="screen-gallery" aria-pressed="true">ダーク</button>
+        </div>
       </div>
     </div>
-    <p>開発ビルドで見直した投稿一覧と設定画面を、サンプルデータで紹介します。</p>
-    <div class="screens">
-      <figure><img src="../assets/screens/ja-dark-home-desktop.png" data-light="../assets/screens/ja-light-home-desktop.png" alt="左にメニュー、右に投稿一覧がある画面" width="1240" height="760" loading="lazy"><figcaption>投稿一覧（PC）</figcaption></figure>
-      <figure><img src="../assets/screens/ja-dark-home-mobile.png" data-light="../assets/screens/ja-light-home-mobile.png" alt="画面下にメニューがある投稿一覧" width="390" height="780" loading="lazy"><figcaption>投稿一覧（モバイル）</figcaption></figure>
-    </div>
-    <div class="screens">
-      <figure><img src="../assets/screens/ja-dark-settings-desktop.png" data-light="../assets/screens/ja-light-settings-desktop.png" alt="左の設定カテゴリと右の言語・翻訳ファイル設定を並べた画面" width="1240" height="760" loading="lazy"><figcaption>設定（PC）</figcaption></figure>
-      <figure><img src="../assets/screens/ja-dark-settings-mobile.png" data-light="../assets/screens/ja-light-settings-mobile.png" alt="言語設定とファイル操作を縦に並べた画面" width="390" height="780" loading="lazy"><figcaption>設定（モバイル）</figcaption></figure>
-    </div>
-    <div class="screens">
-      <figure><img src="../assets/screens/ja-dark-creators.png" data-light="../assets/screens/ja-light-creators.png" alt="名前を入力し一致するクリエイターを表示した検索画面" width="1240" height="760" loading="lazy"><figcaption>クリエイター検索（PC）</figcaption></figure>
-      <figure><img src="../assets/screens/ja-dark-following.png" data-light="../assets/screens/ja-light-following.png" alt="フォロー中のクリエイターとサービスの一覧" width="390" height="780" loading="lazy"><figcaption>フォロー一覧（モバイル）</figcaption></figure>
-    </div>
+    <p>0.5.7の製品版画面をサンプルデータで撮影しました。端末とテーマを切り替えられます。</p>
+    <div class="screens" id="screen-gallery"></div>
+    <template data-gallery-template="desktop">
+      <figure><a href="../assets/screens/ja-dark-home-desktop.png"><img src="../assets/screens/ja-dark-home-desktop.png" data-light="../assets/screens/ja-light-home-desktop.png" alt="投稿サムネイルと検索欄が並ぶホーム画面" width="1240" height="760" loading="lazy"></a><figcaption>投稿一覧</figcaption></figure>
+      <figure><a href="../assets/screens/ja-dark-creators-desktop.png"><img src="../assets/screens/ja-dark-creators-desktop.png" data-light="../assets/screens/ja-light-creators-desktop.png" alt="クリエイター名で絞り込んだ検索結果" width="1240" height="760" loading="lazy"></a><figcaption>クリエイター検索</figcaption></figure>
+      <figure><a href="../assets/screens/ja-dark-following-desktop.png"><img src="../assets/screens/ja-dark-following-desktop.png" data-light="../assets/screens/ja-light-following-desktop.png" alt="フォロー中のクリエイターと最新投稿の一覧" width="1240" height="760" loading="lazy"></a><figcaption>フォロー</figcaption></figure>
+      <figure><a href="../assets/screens/ja-dark-detail-desktop.png"><img src="../assets/screens/ja-dark-detail-desktop.png" data-light="../assets/screens/ja-light-detail-desktop.png" alt="タイトル、クリエイターのボタン、本文を表示する投稿詳細" width="1240" height="760" loading="lazy"></a><figcaption>投稿詳細</figcaption></figure>
+      <figure><a href="../assets/screens/ja-dark-settings-desktop.png"><img src="../assets/screens/ja-dark-settings-desktop.png" data-light="../assets/screens/ja-light-settings-desktop.png" alt="言語の選択と追加フォルダーの同期がある設定画面" width="1240" height="760" loading="lazy"></a><figcaption>言語・翻訳ファイル</figcaption></figure>
+    </template>
+    <template data-gallery-template="mobile">
+      <figure><a href="../assets/screens/ja-dark-home-mobile.png"><img src="../assets/screens/ja-dark-home-mobile.png" data-light="../assets/screens/ja-light-home-mobile.png" alt="投稿サムネイルと検索欄が並ぶホーム画面" width="390" height="780" loading="lazy"></a><figcaption>投稿一覧</figcaption></figure>
+      <figure><a href="../assets/screens/ja-dark-creators-mobile.png"><img src="../assets/screens/ja-dark-creators-mobile.png" data-light="../assets/screens/ja-light-creators-mobile.png" alt="クリエイター名で絞り込んだ検索結果" width="390" height="780" loading="lazy"></a><figcaption>クリエイター検索</figcaption></figure>
+      <figure><a href="../assets/screens/ja-dark-following-mobile.png"><img src="../assets/screens/ja-dark-following-mobile.png" data-light="../assets/screens/ja-light-following-mobile.png" alt="フォロー中のクリエイターと最新投稿の一覧" width="390" height="780" loading="lazy"></a><figcaption>フォロー</figcaption></figure>
+      <figure><a href="../assets/screens/ja-dark-detail-mobile.png"><img src="../assets/screens/ja-dark-detail-mobile.png" data-light="../assets/screens/ja-light-detail-mobile.png" alt="タイトル、クリエイターのボタン、本文を表示する投稿詳細" width="390" height="780" loading="lazy"></a><figcaption>投稿詳細</figcaption></figure>
+      <figure><a href="../assets/screens/ja-dark-settings-mobile.png"><img src="../assets/screens/ja-dark-settings-mobile.png" data-light="../assets/screens/ja-light-settings-mobile.png" alt="言語の選択と追加フォルダーの同期がある設定画面" width="390" height="780" loading="lazy"></a><figcaption>言語・翻訳ファイル</figcaption></figure>
+    </template>
+    <noscript><p>画面例の切り替えにはJavaScriptが必要です。</p></noscript>
   </section>
   <section class="download" id="download" aria-labelledby="download-heading">
     <div class="download-head">

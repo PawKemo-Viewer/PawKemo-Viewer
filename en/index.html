@@ -15,6 +15,7 @@
 <header class="shell site-header">
   <a href="./" class="brand"><img src="../assets/icon.png" alt="" width="38" height="38">PawKemoViewer</a>
   <nav aria-label="Page and language">
+    <a href="#features">Features</a>
     <a href="#download">Downloads</a>
     <a href="../ja/" hreflang="ja" lang="ja">日本語</a>
   </nav>
@@ -23,7 +24,7 @@
   <section class="hero" aria-labelledby="intro">
     <div>
       <h1 id="intro">PawKemoViewer</h1>
-      <p>An unofficial Pawchive viewer for desktop and mobile.</p>
+      <p>An unofficial Pawchive viewer for browsing FANBOX and Patreon posts, searching for creators, and following their updates. Use the bottom menu on mobile or the sidebar on desktop.</p>
       <div class="actions">
         <a class="primary" href="#download">Download <span aria-hidden="true">↓</span></a>
         <a href="https://github.com/nsmr0604/PawKemoViewer">Source code <span aria-hidden="true">↗</span></a>
@@ -31,27 +32,48 @@
     </div>
     <img class="hero-icon" src="../assets/icon.png" width="246" height="246" alt="">
   </section>
+  <section class="features" id="features" aria-labelledby="features-heading">
+    <h2 id="features-heading">Features and how to use them</h2>
+    <div class="feature-grid">
+      <article><h3>Find posts and creators</h3><p>Browse posts from Home. In Creators, search by name, ID, or a supported service URL. Tap or click the creator’s name or avatar under a post title to see their page.</p></article>
+      <article><h3>Open article links and original sites</h3><p>FANBOX and Patreon post links can open the corresponding Pawchive post when it is found. The explicit site buttons above the article use your system browser. The mobile in-app viewer shows the current URL.</p></article>
+      <article><h3>Follow creators and save favorites</h3><p>Sign in to Pawchive to sync followed creators and favorites. Open Following to check for updates and visit unread posts.</p></article>
+      <article><h3>Control image usage</h3><p>Post thumbnails can be cached and reused. Choose a cache size or enable data saver in Settings. Cached thumbnails remain available in data saver.</p></article>
+      <article><h3>Languages and backups</h3><p>Switch between Japanese and English. Place valid translation JSON files in the additional language folder and select Sync language folder. Export or restore a settings backup as JSON.</p></article>
+      <article><h3>Supported devices and installation</h3><p>Download the package for Windows, Linux, Apple silicon Mac, Android, or iPhone/iPad below. The iOS/iPadOS IPA requires signing before installation.</p></article>
+    </div>
+  </section>
   <section class="preview" aria-labelledby="screens">
     <div class="gallery-head">
       <h2 id="screens">App screenshots</h2>
-      <div class="gallery-theme" role="group" aria-label="Screenshot theme" hidden>
-        <button type="button" data-theme-choice="light" aria-pressed="false">Light</button>
-        <button type="button" data-theme-choice="dark" aria-pressed="true">Dark</button>
+      <div class="gallery-controls" hidden>
+        <div class="gallery-choice" role="group" aria-label="Screenshot device">
+          <button type="button" data-device-choice="desktop" aria-controls="screen-gallery" aria-pressed="false">Desktop</button>
+          <button type="button" data-device-choice="mobile" aria-controls="screen-gallery" aria-pressed="false">Mobile</button>
+        </div>
+        <div class="gallery-choice" role="group" aria-label="Screenshot theme">
+          <button type="button" data-theme-choice="light" aria-controls="screen-gallery" aria-pressed="false">Light</button>
+          <button type="button" data-theme-choice="dark" aria-controls="screen-gallery" aria-pressed="true">Dark</button>
+        </div>
       </div>
     </div>
-    <p>See the redesigned post feed and settings from the development build with sample data.</p>
-    <div class="screens">
-      <figure><img src="../assets/screens/en-dark-home-desktop.png" data-light="../assets/screens/en-light-home-desktop.png" alt="Post feed with the menu on the left" width="1240" height="760" loading="lazy"><figcaption>Post feed (desktop)</figcaption></figure>
-      <figure><img src="../assets/screens/en-dark-home-mobile.png" data-light="../assets/screens/en-light-home-mobile.png" alt="Post feed with navigation along the bottom" width="390" height="780" loading="lazy"><figcaption>Post feed (mobile)</figcaption></figure>
-    </div>
-    <div class="screens">
-      <figure><img src="../assets/screens/en-dark-settings-desktop.png" data-light="../assets/screens/en-light-settings-desktop.png" alt="Settings categories beside the language and translation options" width="1240" height="760" loading="lazy"><figcaption>Settings (desktop)</figcaption></figure>
-      <figure><img src="../assets/screens/en-dark-settings-mobile.png" data-light="../assets/screens/en-light-settings-mobile.png" alt="Language and file controls stacked vertically" width="390" height="780" loading="lazy"><figcaption>Settings (mobile)</figcaption></figure>
-    </div>
-    <div class="screens">
-      <figure><img src="../assets/screens/en-dark-creators.png" data-light="../assets/screens/en-light-creators.png" alt="Creator search displaying results matching the entered name" width="1240" height="760" loading="lazy"><figcaption>Creator search (desktop)</figcaption></figure>
-      <figure><img src="../assets/screens/en-dark-following.png" data-light="../assets/screens/en-light-following.png" alt="List of followed creators and their services" width="390" height="780" loading="lazy"><figcaption>Following list (mobile)</figcaption></figure>
-    </div>
+    <p>These screenshots show the 0.5.7 production interface with sample data. Use the controls to change the device or theme.</p>
+    <div class="screens" id="screen-gallery"></div>
+    <template data-gallery-template="desktop">
+      <figure><a href="../assets/screens/en-dark-home-desktop.png"><img src="../assets/screens/en-dark-home-desktop.png" data-light="../assets/screens/en-light-home-desktop.png" alt="Home screen showing post thumbnails and search" width="1240" height="760" loading="lazy"></a><figcaption>Post feed</figcaption></figure>
+      <figure><a href="../assets/screens/en-dark-creators-desktop.png"><img src="../assets/screens/en-dark-creators-desktop.png" data-light="../assets/screens/en-light-creators-desktop.png" alt="Results filtered by creator name" width="1240" height="760" loading="lazy"></a><figcaption>Creator search</figcaption></figure>
+      <figure><a href="../assets/screens/en-dark-following-desktop.png"><img src="../assets/screens/en-dark-following-desktop.png" data-light="../assets/screens/en-light-following-desktop.png" alt="Followed creators and their latest posts" width="1240" height="760" loading="lazy"></a><figcaption>Following</figcaption></figure>
+      <figure><a href="../assets/screens/en-dark-detail-desktop.png"><img src="../assets/screens/en-dark-detail-desktop.png" data-light="../assets/screens/en-light-detail-desktop.png" alt="Post details with the title, creator button, and article text" width="1240" height="760" loading="lazy"></a><figcaption>Post details</figcaption></figure>
+      <figure><a href="../assets/screens/en-dark-settings-desktop.png"><img src="../assets/screens/en-dark-settings-desktop.png" data-light="../assets/screens/en-light-settings-desktop.png" alt="Language selection and language-folder sync in Settings" width="1240" height="760" loading="lazy"></a><figcaption>Language settings</figcaption></figure>
+    </template>
+    <template data-gallery-template="mobile">
+      <figure><a href="../assets/screens/en-dark-home-mobile.png"><img src="../assets/screens/en-dark-home-mobile.png" data-light="../assets/screens/en-light-home-mobile.png" alt="Home screen showing post thumbnails and search" width="390" height="780" loading="lazy"></a><figcaption>Post feed</figcaption></figure>
+      <figure><a href="../assets/screens/en-dark-creators-mobile.png"><img src="../assets/screens/en-dark-creators-mobile.png" data-light="../assets/screens/en-light-creators-mobile.png" alt="Results filtered by creator name" width="390" height="780" loading="lazy"></a><figcaption>Creator search</figcaption></figure>
+      <figure><a href="../assets/screens/en-dark-following-mobile.png"><img src="../assets/screens/en-dark-following-mobile.png" data-light="../assets/screens/en-light-following-mobile.png" alt="Followed creators and their latest posts" width="390" height="780" loading="lazy"></a><figcaption>Following</figcaption></figure>
+      <figure><a href="../assets/screens/en-dark-detail-mobile.png"><img src="../assets/screens/en-dark-detail-mobile.png" data-light="../assets/screens/en-light-detail-mobile.png" alt="Post details with the title, creator button, and article text" width="390" height="780" loading="lazy"></a><figcaption>Post details</figcaption></figure>
+      <figure><a href="../assets/screens/en-dark-settings-mobile.png"><img src="../assets/screens/en-dark-settings-mobile.png" data-light="../assets/screens/en-light-settings-mobile.png" alt="Language selection and language-folder sync in Settings" width="390" height="780" loading="lazy"></a><figcaption>Language settings</figcaption></figure>
+    </template>
+    <noscript><p>Enable JavaScript to switch between screenshots.</p></noscript>
   </section>
   <section class="download" id="download" aria-labelledby="download-heading">
     <div class="download-head">
