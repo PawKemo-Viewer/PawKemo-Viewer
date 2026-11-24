@@ -21,6 +21,15 @@ PawKemoViewer 0.5.5 のビルド・パッケージング・CI 構成です。
   `pawkemoviewer-v{VER}` へ公開する。`artifact_only=true` なら Actions の成果物だけを作る
 - 同名ファイルは置き換え、デバッグ版の古いファイルはアップロード成功後に担当分だけ削除する
 
+### 紹介サイト (gh-pages)
+
+- Pages の公開元は **`gh-pages` ブランチ (legacy)**。`pages.yml` は Actions からの
+  アーティファクトデプロイではなく、`gh-pages` の `release.json` を更新して push する
+- サイトは実行時に `release.json` を読み、プラットフォームごとの最新バージョンとリンクを表示する
+- 5 プラットフォームが揃っていなくても、**取得できた最新のアセット**を各プラットフォームに表示する
+- 正式リリース (prerelease / draft を除く) のアセットだけを対象にする
+- 手動実行 (`workflow_dispatch`) では、その時点の最新アセットで更新する
+
 ### 検証モード (手動のデバッグビルド専用)
 
 - `windows_smoke` (Build Tauri) / `installed_smoke` (macOS Build):
