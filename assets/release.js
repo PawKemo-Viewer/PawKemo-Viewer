@@ -1,9 +1,17 @@
+const releaseMetadataUrl = new URL("../release.json", document.currentScript.src);
+
 async function showRelease() {
   try {
-    const response = await fetch(new URL("../release.json", window.location.href));
+    const response = await fetch(releaseMetadataUrl);
     if (!response.ok) return;
     const release = await response.json();
-    if (!release.assets) return;
+    const repository = release.repository_url ?? release.url?.split("/releases/")[0];
+    if (repository) {
+      for (const link of document.querySelectorAll("[data-repository-path]")) {
+        link.href = repository + link.dataset.repositoryPath;
+      }
+    }
+    if (!release.assets || !release.version) return;
 
     const versionElement = document.querySelector("[data-version]");
     if (versionElement && release.version) versionElement.textContent = release.version;
@@ -34,7 +42,7 @@ async function showRelease() {
       }
     }
   } catch {
-    // 静的な GitHub Releases リンクから引き続き取得できる。
+    // メタデータが取得できなくてもギャラリーは表示できる。
   }
 }
 void showRelease();
