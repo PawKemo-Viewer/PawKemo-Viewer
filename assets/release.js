@@ -1,16 +1,29 @@
 const releaseMetadataUrl = new URL("../release.json", document.currentScript.src);
 
+function repositoryFromPagesUrl(url) {
+  const owner = /^([a-z0-9-]+)\.github\.io$/i.exec(url.hostname)?.[1];
+  if (!owner) return null;
+  const project = url.pathname.split("/")[1];
+  return `https://github.com/${owner}/${project === "release.json" ? url.hostname : project}`;
+}
+
+function setRepositoryLinks(repository) {
+  for (const link of document.querySelectorAll("[data-repository-path]")) {
+    link.href = repository + link.dataset.repositoryPath;
+  }
+}
+
 async function showRelease() {
+  const pagesRepository = repositoryFromPagesUrl(releaseMetadataUrl);
+  if (pagesRepository) setRepositoryLinks(pagesRepository);
+
   try {
     const response = await fetch(releaseMetadataUrl);
     if (!response.ok) return;
     const release = await response.json();
     const repository = release.repository_url ?? release.url?.split("/releases/")[0];
-    if (repository) {
-      for (const link of document.querySelectorAll("[data-repository-path]")) {
-        link.href = repository + link.dataset.repositoryPath;
-      }
-    }
+    if (pagesRepository && repository?.toLowerCase() !== pagesRepository.toLowerCase()) return;
+    if (!pagesRepository && repository) setRepositoryLinks(repository);
     if (!release.assets || !release.version) return;
 
     const versionElement = document.querySelector("[data-version]");
