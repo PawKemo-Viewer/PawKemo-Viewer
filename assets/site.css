@@ -98,3 +98,7 @@ figcaption { margin-top: .5rem; color: var(--muted); font-size: .85rem; }
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
+
+.platforms .asset-version { display: block; margin-top: .3rem; font-style: normal; font-size: .78rem; color: var(--accent); letter-spacing: .02em; }
+.platforms .asset-version:empty { display: none; }
+

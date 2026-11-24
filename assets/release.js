@@ -3,22 +3,36 @@ async function showRelease() {
     const response = await fetch(new URL("../release.json", window.location.href));
     if (!response.ok) return;
     const release = await response.json();
-    if (!release.version || !release.published || !release.url) return;
+    if (!release.assets) return;
 
-    document.querySelector("[data-version]").textContent = release.version;
+    const versionElement = document.querySelector("[data-version]");
+    if (versionElement && release.version) versionElement.textContent = release.version;
+
     const publication = document.querySelector("[data-published]");
-    publication.dateTime = release.published;
-    publication.textContent = new Intl.DateTimeFormat(document.documentElement.lang, {
-      dateStyle: "medium",
-      timeZone: "UTC",
-    }).format(new Date(release.published));
-
-    document.querySelector("[data-release-link]").href = release.url;
-    for (const link of document.querySelectorAll("[data-platform]")) {
-      const url = release.assets[link.dataset.platform];
-      if (url) link.href = url;
+    if (publication && release.published) {
+      publication.dateTime = release.published;
+      publication.textContent = new Intl.DateTimeFormat(document.documentElement.lang, {
+        dateStyle: "medium",
+        timeZone: "UTC",
+      }).format(new Date(release.published));
     }
-    document.querySelector("[data-release]").hidden = false;
+
+    const releaseLink = document.querySelector("[data-release-link]");
+    if (releaseLink && release.url) releaseLink.href = release.url;
+
+    const releaseBlock = document.querySelector("[data-release]");
+    if (releaseBlock) releaseBlock.hidden = false;
+
+    for (const link of document.querySelectorAll("[data-platform]")) {
+      const asset = release.assets[link.dataset.platform];
+      if (!asset) continue;
+      if (asset.url) link.href = asset.url;
+      const assetVersion = link.querySelector("[data-asset-version]");
+      if (assetVersion && asset.version) assetVersion.textContent = asset.version;
+      if (asset.name || asset.version) {
+        link.title = [asset.name, asset.version].filter(Boolean).join(" / ");
+      }
+    }
   } catch {
     // 静的な GitHub Releases リンクから引き続き取得できる。
   }
