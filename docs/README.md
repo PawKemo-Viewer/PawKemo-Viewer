@@ -1,7 +1,7 @@
 # 開発者向けドキュメント
 
 PawKemoViewer の開発・設計・ビルド・API の資料です。利用者向けの使い方と設定は
-[Wiki](https://github.com/nsmr0604/pawchive/wiki) にまとめています。
+[Wiki](../../../wiki) にまとめています。
 
 ## まず読む
 
@@ -16,6 +16,10 @@ PawKemoViewer の開発・設計・ビルド・API の資料です。利用者�
 
 - [設計資料の目次](architecture/README.md): 棚卸し、プラットフォーム契約、ユースケース、
   リポジトリ、ドメイン、OS ストレージ、画面構成、検証記録
+
+## 計画
+
+- [一括画像ダウンロード機能](plan/bulk-image-download.md): 仕様、保存先、マイルストーン、見積もり
 
 ## 引継ぎ
 
